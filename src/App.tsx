@@ -12,6 +12,9 @@ import { ComplianceView } from './pages/ComplianceView';
 import { FundingView } from './pages/FundingView';
 import { MarketplaceView } from './pages/MarketplaceView';
 import { SettingsView } from './pages/SettingsView';
+import { CompanyProfileView } from './pages/CompanyProfileView';
+import { AnalyticsView } from './pages/AnalyticsView';
+import { ReportsView } from './pages/ReportsView';
 
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
@@ -53,8 +56,14 @@ export const App: React.FC = () => {
 
   // App Layout State
   const [currentModule, setCurrentModule] = useState<string>('dashboard');
+  const [activeHeaderTab, setActiveHeaderTab] = useState<'overview' | 'analytics' | 'reports'>('overview');
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
   const [darkMode, setDarkMode] = useState<boolean>(false);
+
+  const handleSelectModule = (mod: string) => {
+    setCurrentModule(mod);
+    setActiveHeaderTab('overview');
+  };
 
   // Modals
   const [isCustomerModalOpen, setIsCustomerModalOpen] = useState<boolean>(false);
@@ -308,9 +317,11 @@ export const App: React.FC = () => {
       {/* Sidebar */}
       <Sidebar
         currentModule={currentModule}
-        setCurrentModule={setCurrentModule}
+        setCurrentModule={handleSelectModule}
         isOpen={isSidebarOpen}
         setIsOpen={setIsSidebarOpen}
+        lowStockCount={dashboardSummary?.lowStockCount || 0}
+        pendingComplianceCount={complianceItems.filter((i) => i.status === 'pending').length}
       />
 
       {/* Main Container */}
@@ -319,94 +330,112 @@ export const App: React.FC = () => {
           user={auth?.user || null}
           onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
           setMobileOpen={setIsSidebarOpen}
-          setCurrentModule={setCurrentModule}
+          setCurrentModule={handleSelectModule}
           darkMode={darkMode}
           setDarkMode={setDarkMode}
           onLogout={handleLogout}
           currentModuleName={currentModuleNameMap[currentModule] || 'Overview'}
+          activeHeaderTab={activeHeaderTab}
+          setActiveHeaderTab={setActiveHeaderTab}
         />
 
         <main className="flex-1 p-6 lg:p-8 overflow-y-auto">
-          {currentModule === 'dashboard' && (
-            <DashboardView
-              summary={dashboardSummary}
-              setCurrentModule={setCurrentModule}
-              onOpenNewInvoiceModal={() => setIsInvoiceModalOpen(true)}
-              onOpenNewCustomerModal={() => setIsCustomerModalOpen(true)}
-              onOpenNewExpenseModal={() => setIsTransactionModalOpen(true)}
-            />
+          {activeHeaderTab === 'analytics' && (
+            <AnalyticsView summary={dashboardSummary} currentModule={currentModuleNameMap[currentModule] || currentModule} />
           )}
 
-          {currentModule === 'ai-assistant' && (
-            <AIAssistantView summary={dashboardSummary} />
+          {activeHeaderTab === 'reports' && (
+            <ReportsView summary={dashboardSummary} currentModule={currentModuleNameMap[currentModule] || currentModule} />
           )}
 
-          {currentModule === 'crm' && (
-            <CRMView
-              customers={customers}
-              onAddCustomer={handleAddCustomer}
-              onDeleteCustomer={handleDeleteCustomer}
-              onOpenModal={() => setIsCustomerModalOpen(true)}
-            />
-          )}
+          {activeHeaderTab === 'overview' && (
+            <>
+              {currentModule === 'dashboard' && (
+                <DashboardView
+                  summary={dashboardSummary}
+                  setCurrentModule={handleSelectModule}
+                  onOpenNewInvoiceModal={() => setIsInvoiceModalOpen(true)}
+                  onOpenNewCustomerModal={() => setIsCustomerModalOpen(true)}
+                  onOpenNewExpenseModal={() => setIsTransactionModalOpen(true)}
+                />
+              )}
 
-          {currentModule === 'accounting' && (
-            <AccountingView
-              transactions={transactions}
-              onDeleteTransaction={handleDeleteTransaction}
-              onOpenModal={() => setIsTransactionModalOpen(true)}
-            />
-          )}
+              {currentModule === 'ai-assistant' && (
+                <AIAssistantView summary={dashboardSummary} />
+              )}
 
-          {currentModule === 'inventory' && (
-            <InventoryView
-              products={products}
-              onUpdateProduct={handleUpdateProduct}
-              onDeleteProduct={handleDeleteProduct}
-              onOpenModal={() => setIsProductModalOpen(true)}
-            />
-          )}
+              {currentModule === 'crm' && (
+                <CRMView
+                  customers={customers}
+                  onAddCustomer={handleAddCustomer}
+                  onDeleteCustomer={handleDeleteCustomer}
+                  onOpenModal={() => setIsCustomerModalOpen(true)}
+                />
+              )}
 
-          {currentModule === 'invoices' && (
-            <InvoicesView
-              invoices={invoices}
-              onUpdateStatus={handleUpdateInvoiceStatus}
-              onOpenModal={() => setIsInvoiceModalOpen(true)}
-            />
-          )}
+              {currentModule === 'accounting' && (
+                <AccountingView
+                  transactions={transactions}
+                  onDeleteTransaction={handleDeleteTransaction}
+                  onOpenModal={() => setIsTransactionModalOpen(true)}
+                />
+              )}
 
-          {currentModule === 'payroll' && (
-            <PayrollView
-              employees={employees}
-              onRunPayroll={handleRunPayroll}
-              onOpenModal={() => setIsCustomerModalOpen(true)}
-            />
-          )}
+              {currentModule === 'inventory' && (
+                <InventoryView
+                  products={products}
+                  onUpdateProduct={handleUpdateProduct}
+                  onDeleteProduct={handleDeleteProduct}
+                  onOpenModal={() => setIsProductModalOpen(true)}
+                />
+              )}
 
-          {currentModule === 'compliance' && (
-            <ComplianceView
-              items={complianceItems}
-              onUpdateStatus={handleUpdateComplianceStatus}
-            />
-          )}
+              {currentModule === 'invoices' && (
+                <InvoicesView
+                  invoices={invoices}
+                  onUpdateStatus={handleUpdateInvoiceStatus}
+                  onOpenModal={() => setIsInvoiceModalOpen(true)}
+                />
+              )}
 
-          {currentModule === 'funding' && (
-            <FundingView
-              opportunities={fundingOpportunities}
-              onApply={handleApplyFunding}
-            />
-          )}
+              {currentModule === 'payroll' && (
+                <PayrollView
+                  employees={employees}
+                  onRunPayroll={handleRunPayroll}
+                  onOpenModal={() => setIsCustomerModalOpen(true)}
+                />
+              )}
 
-          {currentModule === 'marketplace' && (
-            <MarketplaceView vendors={vendors} />
-          )}
+              {currentModule === 'compliance' && (
+                <ComplianceView
+                  items={complianceItems}
+                  onUpdateStatus={handleUpdateComplianceStatus}
+                />
+              )}
 
-          {currentModule === 'settings' && (
-            <SettingsView
-              user={auth?.user || null}
-              darkMode={darkMode}
-              setDarkMode={setDarkMode}
-            />
+              {currentModule === 'funding' && (
+                <FundingView
+                  opportunities={fundingOpportunities}
+                  onApply={handleApplyFunding}
+                />
+              )}
+
+              {currentModule === 'marketplace' && (
+                <MarketplaceView vendors={vendors} />
+              )}
+
+              {currentModule === 'profile' && (
+                <CompanyProfileView user={auth?.user || null} />
+              )}
+
+              {currentModule === 'settings' && (
+                <SettingsView
+                  user={auth?.user || null}
+                  darkMode={darkMode}
+                  setDarkMode={setDarkMode}
+                />
+              )}
+            </>
           )}
         </main>
       </div>

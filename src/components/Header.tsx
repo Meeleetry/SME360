@@ -23,6 +23,8 @@ interface HeaderProps {
   darkMode: boolean;
   setDarkMode: (dark: boolean) => void;
   currentModuleName?: string;
+  activeHeaderTab?: 'overview' | 'analytics' | 'reports';
+  setActiveHeaderTab?: (tab: 'overview' | 'analytics' | 'reports') => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -34,10 +36,35 @@ export const Header: React.FC<HeaderProps> = ({
   darkMode,
   setDarkMode,
   currentModuleName = 'Overview',
+  activeHeaderTab = 'overview',
+  setActiveHeaderTab,
 }) => {
   const [profileOpen, setProfileOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'analytics' | 'reports'>('overview');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  const searchIndex = [
+    { label: 'Dashboard & Metrics', module: 'dashboard', category: 'Core Module' },
+    { label: 'AI Business Advisor / CFO', module: 'ai-assistant', category: 'AI Tools' },
+    { label: 'Accounting & P&L Ledger', module: 'accounting', category: 'Finance' },
+    { label: 'CRM & Client Management', module: 'crm', category: 'Sales' },
+    { label: 'Inventory SKUs & Warehouses', module: 'inventory', category: 'Operations' },
+    { label: 'Invoicing & Client Billing', module: 'invoices', category: 'Billing' },
+    { label: 'Payroll & Employee Staffing', module: 'payroll', category: 'HR' },
+    { label: 'Compliance & Audits', module: 'compliance', category: 'Legal' },
+    { label: 'Funding & Business Grants', module: 'funding', category: 'Capital' },
+    { label: 'B2B Vendor Marketplace', module: 'marketplace', category: 'Suppliers' },
+    { label: 'Company Profile & Registration', module: 'profile', category: 'Company' },
+    { label: 'Settings & Security', module: 'settings', category: 'Admin' },
+  ];
+
+  const searchResults = searchQuery.trim()
+    ? searchIndex.filter((item) =>
+        item.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.category.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : [];
 
   const handleOpenMobile = () => {
     if (onToggleSidebar) onToggleSidebar();
@@ -49,6 +76,19 @@ export const Header: React.FC<HeaderProps> = ({
     const parts = name.split(' ');
     if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
     return name.slice(0, 2).toUpperCase();
+  };
+
+  const handleHeaderTabClick = (tab: 'overview' | 'analytics' | 'reports') => {
+    if (setActiveHeaderTab) setActiveHeaderTab(tab);
+  };
+
+  const handleSelectSearchResult = (module: string) => {
+    if (setCurrentModule) {
+      setCurrentModule(module);
+      if (setActiveHeaderTab) setActiveHeaderTab('overview');
+    }
+    setSearchQuery('');
+    setSearchOpen(false);
   };
 
   return (
@@ -65,9 +105,9 @@ export const Header: React.FC<HeaderProps> = ({
 
         <div className="hidden sm:flex items-center gap-6 text-sm font-medium">
           <button
-            onClick={() => setActiveTab('overview')}
+            onClick={() => handleHeaderTabClick('overview')}
             className={`h-16 px-1 transition-colors flex items-center font-semibold ${
-              activeTab === 'overview'
+              activeHeaderTab === 'overview'
                 ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
@@ -75,9 +115,9 @@ export const Header: React.FC<HeaderProps> = ({
             {currentModuleName || 'Overview'}
           </button>
           <button
-            onClick={() => setActiveTab('analytics')}
+            onClick={() => handleHeaderTabClick('analytics')}
             className={`h-16 px-1 transition-colors flex items-center ${
-              activeTab === 'analytics'
+              activeHeaderTab === 'analytics'
                 ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400 font-semibold'
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
@@ -85,9 +125,9 @@ export const Header: React.FC<HeaderProps> = ({
             Analytics
           </button>
           <button
-            onClick={() => setActiveTab('reports')}
+            onClick={() => handleHeaderTabClick('reports')}
             className={`h-16 px-1 transition-colors flex items-center ${
-              activeTab === 'reports'
+              activeHeaderTab === 'reports'
                 ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400 font-semibold'
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
@@ -104,9 +144,31 @@ export const Header: React.FC<HeaderProps> = ({
           <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-400 pointer-events-none" />
           <input
             type="text"
-            placeholder="Search anything..."
-            className="bg-slate-100 dark:bg-slate-800 rounded-lg py-1.5 pl-8 pr-4 text-xs w-48 border-0 ring-0 focus:ring-2 focus:ring-indigo-500 focus:bg-white dark:focus:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 outline-none transition-all"
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setSearchOpen(true);
+            }}
+            onFocus={() => setSearchOpen(true)}
+            placeholder="Search modules, invoices, CRM..."
+            className="bg-slate-100 dark:bg-slate-800 rounded-lg py-1.5 pl-8 pr-4 text-xs w-52 border-0 ring-0 focus:ring-2 focus:ring-indigo-500 focus:bg-white dark:focus:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 outline-none transition-all"
           />
+
+          {searchOpen && searchResults.length > 0 && (
+            <div className="absolute left-0 right-0 mt-2 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 py-2 z-50">
+              <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase">Quick Jump</div>
+              {searchResults.map((res) => (
+                <button
+                  key={res.module}
+                  onClick={() => handleSelectSearchResult(res.module)}
+                  className="w-full text-left px-3 py-2 text-xs hover:bg-indigo-50 dark:hover:bg-indigo-950/60 flex items-center justify-between"
+                >
+                  <span className="font-semibold text-slate-800 dark:text-slate-200">{res.label}</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500">{res.category}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Action Controls */}
