@@ -1,0 +1,6 @@
+{
+  "name": "SME360 AI",
+  "description": "All-in-one AI-powered SME management platform with CRM, Accounting, Inventory, Invoicing, Payroll, Compliance, and Funding.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

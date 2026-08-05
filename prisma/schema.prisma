@@ -1,0 +1,128 @@
+// SME360 AI - Prisma Database Schema
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id          String   @id @default(uuid())
+  email       String   @unique
+  password    String
+  name        String
+  companyName String
+  role        String   @default("admin")
+  currency    String   @default("USD")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Customer {
+  id            String    @id @default(uuid())
+  name          String
+  company       String
+  email         String    @unique
+  phone         String
+  status        String    @default("Active") // Lead, Active, Inactive
+  totalSpent    Float     @default(0.0)
+  lastOrderDate String?
+  invoices      Invoice[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Product {
+  id           String   @id @default(uuid())
+  sku          String   @unique
+  name         String
+  category     String
+  price        Float
+  cost         Float
+  stock        Int      @default(0)
+  reorderPoint Int      @default(10)
+  unit         String   @default("pcs")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Invoice {
+  id            String        @id @default(uuid())
+  invoiceNumber String        @unique
+  customerId    String
+  customer      Customer      @relation(fields: [customerId], references: [id])
+  customerName  String
+  customerEmail String
+  issueDate     DateTime
+  dueDate       DateTime
+  subtotal      Float
+  tax           Float
+  total         Float
+  status        String        @default("pending") // paid, pending, overdue, draft
+  notes         String?
+  items         InvoiceItem[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model InvoiceItem {
+  id          String   @id @default(uuid())
+  invoiceId   String
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  description String
+  quantity    Int
+  unitPrice   Float
+  amount      Float
+}
+
+model Expense {
+  id          String   @id @default(uuid())
+  type        String   @default("expense") // income, expense
+  amount      Float
+  category    String
+  date        DateTime
+  description String
+  reference   String
+  status      String   @default("Completed")
+  createdAt   DateTime @default(now())
+}
+
+model Employee {
+  id            String   @id @default(uuid())
+  name          String
+  email         String   @unique
+  role          String
+  department    String
+  salary        Float
+  taxDeductions Float
+  netPay        Float
+  paymentStatus String   @default("Pending") // Paid, Pending, Processing
+  joinDate      DateTime
+  createdAt     DateTime @default(now())
+}
+
+model ComplianceItem {
+  id          String   @id @default(uuid())
+  title       String
+  category    String   // Tax, ESG, Labor, Audit
+  dueDate     DateTime
+  status      String   @default("pending") // compliant, pending, action_required, overdue
+  authority   String
+  description String
+  createdAt   DateTime @default(now())
+}
+
+model FundingApp {
+  id          String   @id @default(uuid())
+  title       String
+  type        String   // Grant, Loan, Equity
+  provider    String
+  maxAmount   Float
+  matchScore  Int
+  deadline    String
+  status      String   @default("available") // available, applied, under_review, approved
+  description String
+  createdAt   DateTime @default(now())
+}
